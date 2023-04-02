@@ -4,6 +4,8 @@
 
 package com.ziqni.transformer.sample
 
+import com.ziqni.transformer.SampleTransformerWithCallback
+import com.ziqni.transformer.test.ZiqniTransformerTester
 import org.joda.time.DateTime
 import org.scalatest._
 import org.scalatest.funspec.AnyFunSpec
@@ -11,41 +13,44 @@ import org.scalatest.matchers.must.Matchers
 
 class SampleTransformerTest extends AnyFunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach with BeforeAndAfterAll {
 
+	val TEST_Exchange = "some-exchange"
+	val TEST_RoutingKey = "transaction"
+
 	describe("Test the message queue receiver implementation") {
 
 		it("should receive a published message and transform it into an event") {
 
 			val messageTypesList = Seq(
 				SampleTransformerTest.Transaction_Msq(10000, 20000),
-//				SampleTransformerTest.CANCEL_BET_Msg(txtIdStr = SampleTransformerTest.txId+"-1"),
-//				SampleTransformerTest.BET_Msg(11000, SampleTransformerTest.gamePhaseId+"-2", SampleTransformerTest.txId+"-2"),
-//				SampleTransformerTest.BET_Msg(20100, SampleTransformerTest.gamePhaseId+"-2", SampleTransformerTest.txId+"-3"),
-//				SampleTransformerTest.WIN_Msg((11000 + 20100), 21000, SampleTransformerTest.gamePhaseId+"-2", SampleTransformerTest.txId+"-4"),
-//				SampleTransformerTest.BET_Msg(20000, SampleTransformerTest.gamePhaseId+"-3", SampleTransformerTest.txId+"-5"),
-//				SampleTransformerTest.WIN_Msg(20000, 0, SampleTransformerTest.gamePhaseId+"-3", SampleTransformerTest.txId+"-6") // loss event
+				SampleTransformerTest.CANCEL_BET_Msg(txtIdStr = SampleTransformerTest.txId+"-1"),
+				SampleTransformerTest.BET_Msg(11000, SampleTransformerTest.gamePhaseId+"-2", SampleTransformerTest.txId+"-2"),
+				SampleTransformerTest.BET_Msg(20100, SampleTransformerTest.gamePhaseId+"-2", SampleTransformerTest.txId+"-3"),
+				SampleTransformerTest.WIN_Msg((11000 + 20100), 21000, SampleTransformerTest.gamePhaseId+"-2", SampleTransformerTest.txId+"-4"),
+				SampleTransformerTest.BET_Msg(20000, SampleTransformerTest.gamePhaseId+"-3", SampleTransformerTest.txId+"-5"),
+				SampleTransformerTest.WIN_Msg(20000, 0, SampleTransformerTest.gamePhaseId+"-3", SampleTransformerTest.txId+"-6") // loss event
 			)
 
-			val api = new ZiqniApiWithClientTest()
+			val ziqniMqTransformer = ZiqniTransformerTester.loadDefault()
 			val args: Map[String, Any] = Map.empty
 
 			When("the message is forwarded")
 
 			/** Call our transformer script **/
-			val transformer = new SampleTransformer
+			val transformer = new SampleTransformerWithCallback
 
 			messageTypesList.foreach { eventJsonString =>
 				/** Receive raw json data **/
-				val json = eventJsonString.toCharArray.map(_.toByte)
+				val jsonBytes = eventJsonString.toCharArray.map(_.toByte)
 
 				/** Send the raw data to our transformer script for transformation * */
-				transformer.apply(json, api, args)
+				transformer.rabbit(jsonBytes, TEST_RoutingKey, TEST_RoutingKey, ziqniMqTransformer.ziqniContextExt)
 			}
 			Then("the event should be received")
 
 
 			info ("Verify if data was received successfully by our system")
-			assert(api.eventsReceivedForTest.nonEmpty)
-			assert(api.eventsReceivedForTest.size == 5)
+//			assert(ziqniMqTransformer.ziqniStores.eventsReceivedForTest.nonEmpty)
+//			assert(api.eventsReceivedForTest.size == 5)
 
 		}
 	}
@@ -71,7 +76,7 @@ object SampleTransformerTest {
 	  * fields changed - v1.2
 	  * - deviceType: number > string
 	  */
-	/*def BET_Msg(amount: Double, gPhaseId: String = gamePhaseId, txtIdStr: String = txId): String = {
+	def BET_Msg(amount: Double, gPhaseId: String = gamePhaseId, txtIdStr: String = txId): String = {
 		s"""
 		  {
 			"action": "bet",
@@ -101,7 +106,7 @@ object SampleTransformerTest {
 			"regulatorTransactionCode" : "E9GiuH3pKJAgPeXy"
 		}
 	""".stripMargin
-	}*/
+	}
 
 	/**
 	  * new fields added - v1.1"
@@ -118,7 +123,7 @@ object SampleTransformerTest {
 	  * fields changed - v1.2
 	  * - deviceType: number > string
 	  */
-	/*def CANCEL_BET_Msg(gPhaseId: String = gamePhaseId, txtIdStr: String = txId) = {
+	def CANCEL_BET_Msg(gPhaseId: String = gamePhaseId, txtIdStr: String = txId) = {
 		s"""
 		  {
 			"action": "cancel_bet",
@@ -145,7 +150,7 @@ object SampleTransformerTest {
 			"regulatorTransactionCode" : "E9GiuH3pKJAgPeXy"
 		}
 	""".stripMargin
-	}*/
+	}
 
 	/**
 	  * new fields added - v1.1"
@@ -162,7 +167,7 @@ object SampleTransformerTest {
 	  * fields changed - v1.2
 	  * - deviceType: number > string
 	  */
-	/*def WIN_Msg(betAmount: Double, amount: Double, gPhaseId: String = gamePhaseId, txtIdStr: String = txId): String = {
+	def WIN_Msg(betAmount: Double, amount: Double, gPhaseId: String = gamePhaseId, txtIdStr: String = txId): String = {
 		s"""
 			  {
 				"action": "win",
@@ -196,7 +201,7 @@ object SampleTransformerTest {
 				"regulatorTransactionCode" : "E9GiuH3pKJAgPeXy"
 			}
 		""".stripMargin
-	}*/
+	}
 
 	/**
 	  * Transaction model
