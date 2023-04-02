@@ -24,7 +24,7 @@ class SampleTransformerTest extends AnyFunSpec with Matchers with GivenWhenThen 
 				SampleTransformerTest.Transaction_Msq(10000, 20000)
 			)
 
-			val ziqniMqTransformer = ZiqniTransformerTester.loadDefault()
+			val ziqniMqTransformer = ZiqniTransformerTester.loadDefaultWithSampleData()
 			val args: Map[String, Any] = Map.empty
 
 			When("the message is forwarded")
