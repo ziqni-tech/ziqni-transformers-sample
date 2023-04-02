@@ -4,8 +4,6 @@
 
 package com.ziqni.transformer.sample
 
-import com.ziqni.transformer.SampleTransformer
-import com.ziqni.transformer.utils.ZiqniApiWithClientTest
 import org.joda.time.DateTime
 import org.scalatest._
 import org.scalatest.funspec.AnyFunSpec
