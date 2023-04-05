@@ -10,10 +10,9 @@ import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, JArray, JValue, JsonAST}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
-import java.util.Base64
 import scala.util.Try
 
-class SampleTransformerWithCallback extends ZiqniMqTransformer with LazyLogging {
+class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging {
 	private implicit val formats: DefaultFormats.type = DefaultFormats
 
 	// Callback example

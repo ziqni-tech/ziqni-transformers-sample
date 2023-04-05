@@ -4,33 +4,33 @@
 
 package com.ziqni.transformer.sample
 
-import com.ziqni.transformer.SampleTransformerWithCallback
+import com.ziqni.transformer.AdvancedSampleWithCallback
 import com.ziqni.transformer.test.ZiqniTransformerTester
 import org.joda.time.DateTime
 import org.scalatest._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.must.Matchers
 
-class SampleTransformerTest extends AnyFunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach with BeforeAndAfterAll {
+class AdvancedSampleWithCallbackTest extends AnyFunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach with BeforeAndAfterAll {
 
 	val TEST_Exchange = "some-exchange"
 	val TEST_RoutingKey = "transaction"
 
 	describe("Test the message queue receiver implementation") {
 
+		val ziqniMqTransformer = ZiqniTransformerTester.loadDefaultWithSampleData()
+
 		it("should receive a published message and transform it into an event") {
 
 			val messageTypesList = Seq(
 				SampleTransformerTest.Transaction_Msq(10000, 20000)
 			)
-
-			val ziqniMqTransformer = ZiqniTransformerTester.loadDefaultWithSampleData()
 			val args: Map[String, Any] = Map.empty
 
 			When("the message is forwarded")
 
 			/** Call our transformer script **/
-			val transformer = new SampleTransformerWithCallback
+			val transformer = new AdvancedSampleWithCallback
 
 			messageTypesList.foreach { eventJsonString =>
 				/** Receive raw json data **/
@@ -43,10 +43,15 @@ class SampleTransformerTest extends AnyFunSpec with Matchers with GivenWhenThen 
 
 
 			info ("Verify if data was received successfully by our system")
-//			assert(ziqniMqTransformer.ziqniStores.eventsReceivedForTest.nonEmpty)
+//			assert(ziqniMqTransformer.ziqniStores.eventsStore.cache..nonEmpty)
 //			assert(api.eventsReceivedForTest.size == 5)
 
 		}
+
+//		it("should create a member") {
+//			When("a new member")
+//			ziqniMqTransformer.ziqniContextExt.ziqniApiAsync.createMember()
+//		}
 	}
 }
 
