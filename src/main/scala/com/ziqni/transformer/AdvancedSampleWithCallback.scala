@@ -4,19 +4,19 @@ package com.ziqni.transformer
  * Copyright (c) 2023. ZIQNI LTD registered in England and Wales, company registration number-09693684
  */
 import com.typesafe.scalalogging.LazyLogging
-import com.ziqni.transformers.domain.{BasicAwardModel, BasicEntityChangeSubscriptionRequest, BasicEntityChanged, BasicEventModel, BasicRewardModel, HttpResponseEntity}
+import com.ziqni.transformers.domain.{BasicEntityChangeSubscriptionRequest, BasicEntityChanged, BasicEntityStateChanged, BasicEventModel}
+import com.ziqni.transformers.webhooks._
 import com.ziqni.transformers.{EventbusAddress, EventbusArgs, EventbusGroup, EventbusMessage, Json, ZiqniContext, ZiqniMqTransformer, ZiqniTransformerEventbusConfig, ZiqniTransformerInfo}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, JArray, JValue, JsonAST}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
-import scala.util.Try
 
-class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging {
+class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging with ClassicWebhooks {
 	private implicit val formats: DefaultFormats.type = DefaultFormats
 
 	// Callback example
-	private val PostToUrl = "SOME-URL-TO-POST-TO"
+	val webHookSettings = ClassicWebhookSettings(url = "SOME-URL-TO-POST-TO")
 
 	// JSON keys
 	val ACTION_KEY = "action"
@@ -370,15 +370,10 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging {
 		totalWinAmount / totalBetAmount
 	}
 
-	////////////////////////////////////////////////////////
-	///>>      WEBHOOK REPLACEMENT:: OPTIONAL          <<///
-	///>>Replace old webhooks with system notifications<<///
-	////////////////////////////////////////////////////////
-
-
-	val TYPE_OF_CHANGE_CREATED = 1;
-	val TYPE_OF_CHANGE_UPDATED = 2;
-	val TYPE_OF_CHANGE_DELETED = 3;
+	////////////////////////////////////////////////////////////
+	/// >>       WEBHOOK REPLACEMENT:: OPTIONAL           << ///
+	/// >> Replace old webhooks with system notifications << ///
+	////////////////////////////////////////////////////////////
 
 	/**
 	 * The system events we would like to be notified about
@@ -386,269 +381,13 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging {
 	 * @param ziqniContext The context for this transformer
 	 * @return
 	 */
-	override def getEntityChangeSubscriptionRequest(ziqniContext: ZiqniContext): Seq[BasicEntityChangeSubscriptionRequest] = {
-		Seq(
-			BasicEntityChangeSubscriptionRequest("EntityChanged", "Reward"),
-			BasicEntityChangeSubscriptionRequest("EntityChanged", "Member"),
-			BasicEntityChangeSubscriptionRequest("EntityChanged", "Product"),
+	override def getEntityChangeSubscriptionRequest(ziqniContext: ZiqniContext): Seq[BasicEntityChangeSubscriptionRequest] = webHookSettings.classicEntityChangeSubscriptionRequest
 
-			BasicEntityChangeSubscriptionRequest("EntityChanged", "Award"),
-			BasicEntityChangeSubscriptionRequest("EntityStateChanged", "Award"),
-
-			BasicEntityChangeSubscriptionRequest("EntityChanged", "Achievement"),
-			BasicEntityChangeSubscriptionRequest("EntityStateChanged", "Achievement"),
-
-			BasicEntityChangeSubscriptionRequest("EntityChanged", "Competition"),
-			BasicEntityChangeSubscriptionRequest("EntityStateChanged", "Competition"),
-
-			BasicEntityChangeSubscriptionRequest("EntityChanged", "Contest"),
-			BasicEntityChangeSubscriptionRequest("EntityStateChanged", "Contest")
-		)
-	}
-
-	/**
-	 * If the transformer is subscribed to entity changes then this method is invoked
-	 *
-	 * @param change The change events
-	 */
 	override def onEntityChanged(change: BasicEntityChanged, ziqniContext: ZiqniContext): Unit = {
-		logger.error(s"onEntityChanged: typeOffChange[${change.typeOffChange}] - ${change.toString}")
-		implicit val e: ExecutionContextExecutor = ziqniContext.ziqniExecutionContext
-		implicit val z: ZiqniContext = ziqniContext
-		implicit val c: BasicEntityChanged = change
-
-		if ("Member".equalsIgnoreCase(change.entityType))
-			onEntityChanged(onCreate = onMemberCreated)
-
-		else if ("Achievement".equalsIgnoreCase(change.entityType))
-			onEntityChanged(onCreate = onAchievementCreated)
-
-		else if ("Reward".equalsIgnoreCase(change.entityType))
-			onEntityChanged(onCreate = onRewardCreated)
-
-		else if ("Award".equalsIgnoreCase(change.entityType))
-			onEntityChanged(onCreate = onAwardIssued, onUpdate = onAwardClaimed)
-
-		else
-			logger.error(s"Unsupported entity type, typeOffChange:${change.entityType} - ${change.toString}")
+		super.onClassicEntityChanged(webHookSettings, change,ziqniContext)
 	}
 
-	private def onEntityChanged(onCreate: () => Unit, onUpdate: () => Unit = () => {})(implicit change: BasicEntityChanged): Unit = {
-		if (TYPE_OF_CHANGE_CREATED == change.typeOffChange)
-			onCreate.apply()
-		else if (TYPE_OF_CHANGE_UPDATED == change.typeOffChange)
-			onUpdate.apply()
-		else
-			logger.error(s"Unsupported entity change, typeOffChange:${change.typeOffChange} - ${change.toString}")
-	}
-
-
-	private def onMemberCreated()(implicit change: BasicEntityChanged, ziqniContext: ZiqniContext, e: ExecutionContextExecutor): Unit = {
-		ziqniContext.ziqniApiAsync.getMember(change.entityId).map {
-			case Some(member) => try {
-				val body = Map[String, Any](
-					"memberId" -> change.entityId,
-					"memberRefId" -> change.entityRefId,
-					"resourcePath" -> s"/api/${ziqniContext.spaceName}/members/${change.entityId}",
-					"objectType" -> "NewMember"
-				)
-				defaultPushBody(body, "onNewMember", response => {
-					val json = ZiqniContext.fromJsonString(response.content)
-					for {
-						name <- (json \ "name").extractOpt[String]
-						groups <- (json \ "flags").extractOpt[Array[String]]
-					} yield {
-						ziqniContext.ziqniApiAsync.updateMember(member.getClMemberId, Some(member.getMemberRefId), Some(name), Some(groups), member.getMetaData)
-					}
-				},
-					response => {
-						val meta = member.getMetaData.getOrElse(Map.empty) ++ Map("error" -> response.content)
-						ziqniContext.ziqniApiAsync.updateMember(member.getClMemberId, Some(member.getMemberRefId), member.getDisplayName, member.getTags, Some(meta))
-					})
-			} catch {
-				case e: Throwable =>
-					logger.error(s"Failed to handle member ${change.entityId}", e)
-					throw e
-			}
-
-			case _ =>
-				logger.error(s"Failed to find member ${change.entityId}")
-		}
-	}
-
-	private def onAchievementCreated()(implicit change: BasicEntityChanged, ziqniContext: ZiqniContext, e: ExecutionContextExecutor): Unit = try {
-
-		ziqniContext.ziqniApiAsync.getAchievement(change.entityId).map {
-			case Some(achievement) =>
-				try {
-					val body = Map[String, Any](
-						"achievementId" -> change.entityId,
-						"achievementName" -> achievement.getName,
-						"achievementDescription" -> achievement.getDescription,
-						"status" -> achievement.getStatus,
-						"startDate" -> achievement.getStartDate.getMillis,
-						"endDate" -> achievement.getEndDate.map(t => t.getMillis),
-						"memberGroups" -> achievement.getGroups,
-						"resourcePath" -> s"/api/${ziqniContext.spaceName}/achievement/${change.entityId}",
-						"objectType" -> "AchievementCreated"
-					)
-					defaultPushBody(body, "onAchievementCreated")
-				} catch {
-					case e: Throwable =>
-						logger.error(s"Failed to handle achievement ${change.entityId}", e)
-						throw e
-				}
-
-			case _ =>
-				logger.error(s"Failed to find achievement ${change.entityId}")
-		}
-
-	} catch {
-		case e: Exception =>
-			logger.error("Failed to push achievement created", e)
-			throw e
-	}
-
-	private def onRewardCreated()(implicit change: BasicEntityChanged, ziqniContext: ZiqniContext, e: ExecutionContextExecutor): Unit = {
-		val reward = ziqniContext.ziqniApi.getReward(change.entityId)
-		val contest = reward.flatMap(r => ziqniContext.ziqniApi.getContest(r.getEntityId))
-
-		val rewardMetaDataProduct = reward.flatMap(_.getMetaData.flatMap(_.get("productRef")))
-
-		val body = Map[String, Any](
-			"reward" -> reward.map(buildReward),
-			"rewardProductRef" -> rewardMetaDataProduct.orElse(contest.flatMap(_.getProductRefIds.flatMap(_.toSeq.filterNot(_ == "system").headOption))),
-			"resourcePath" -> s"/api/${ziqniContext.spaceName}/reward/${change.entityId}",
-			"objectType" -> s"${change.metadata.get("parentType")}RewardCreated"
-		)
-		defaultPushBody(body, s"on${change.metadata.get("parentType")}RewardCreated",
-			handleRewardCreated(reward, _, ziqniContext),
-			onRewardCreationError(reward, _)
-		)
-	}
-
-	private def onAwardIssued()(implicit change: BasicEntityChanged, ziqniContext: ZiqniContext, e: ExecutionContextExecutor): Unit = {
-
-		val award = ziqniContext.ziqniApi.getAward(change.entityId)
-
-		val body = Map[String, Any](
-			s"${award.get.getEntityType.toLowerCase()}Id" -> change.entityParentId,
-			"memberId" -> award.get.getMemberId,
-			"memberRefId" -> ziqniContext.ziqniApi.memberRefIdFromMemberId(award.get.getMemberId),
-			"award" -> award.map(buildAward),
-			"resourcePath" -> s"/api/${ziqniContext.spaceName}/awards/${change.entityParentId}",
-			"objectType" -> s"${award.get.getEntityType}RewardIssued"
-		)
-		defaultPushBody(body, s"on${award.get.getEntityType}RewardIssued")
-		onAwardClaimed()
-	}
-
-	private def onAwardClaimed()(implicit change: BasicEntityChanged, ziqniContext: ZiqniContext, e: ExecutionContextExecutor): Unit = {
-		val award = ziqniContext.ziqniApi.getAward(change.entityId)
-
-		if (award.get.claimed) {
-
-			val body = Map[String, Any](
-				s"${award.get.getEntityType.toLowerCase()}Id" -> change.entityId,
-				"memberId" -> award.get.getMemberId,
-				"memberRefId" -> ziqniContext.ziqniApi.memberRefIdFromMemberId(award.get.getMemberId),
-				"award" -> award.map(buildAward),
-				"rewardTypeKey" -> award.get.getRewardTypeKey,
-				"resourcePath" -> s"/api/${ziqniContext.spaceName}/awards/?id=${change.entityParentId}",
-				"objectType" -> s"${award.get.getEntityType}RewardClaimed"
-			)
-			defaultPushBody(body, s"on${award.get.getEntityType}RewardClaimed")
-		}
-	}
-
-	private def buildReward(reward: BasicRewardModel) = {
-		Map[String, Any](
-			"rewardId" -> reward.getClRewardId,
-			"name" -> reward.getName,
-			"entityId" -> reward.getEntityId,
-			"rewardTypeName" -> reward.getRewardTypeName,
-			"rewardTypeKey" -> reward.getRewardTypeKey,
-			"rewardTypeId" -> reward.getRewardTypeId,
-			"value" -> reward.getValue,
-			"description" -> reward.getDescription,
-			"metadata" -> reward.getMetaData
-		)
-	}
-
-	private def buildAward(award: BasicAwardModel) = {
-		val metadata = award.getRewardMetaData
-		val bonusId = metadata.flatMap(_.get("bonusId").flatMap(b => Try(b.toInt).toOption))
-		Map[String, Any](
-			"rewardId" -> award.getRewardId,
-			"awardId" -> award.getClAwardId,
-			"name" -> award.getRewardName,
-			"entityId" -> award.getEntityId,
-			"rewardTypeKey" -> award.getRewardTypeKey,
-			"rewardTypeId" -> award.getRewardTypeId,
-			"value" -> award.getRewardValue,
-			"metadata" -> metadata,
-			"bonusId" -> bonusId
-		)
-	}
-
-	////////////////////////////////////////////////////////
-	///>>         WEB PUBLISHING UTILITIES             <<///
-	////////////////////////////////////////////////////////
-
-	private def defaultPushBody(body: Map[String, Any], onEventHeader: String, onSuccess: HttpResponseEntity => Unit = _ => (), onFailure: HttpResponseEntity => Unit = _ => ())(implicit ziqniContext: ZiqniContext): Unit = {
-		val timestamp = DateTime.now().getMillis
-		val withDefaults = body ++ Map(
-			"timestamp" -> timestamp,
-			"spaceName" -> ziqniContext.spaceName
-		)
-
-		val json = ZiqniContext.toJsonFromMap(withDefaults)
-		val headers = ziqniContext.ziqniApiHttp.HTTPDefaultHeader(ziqniContext.accountId, onEventHeader)
-		val response = retry(() => ziqniContext.ziqniApiHttp.httpPost(PostToUrl, json, headers))
-
-		if (response.statusCode != 200) {
-			logger.error(s"${DateTime.now()}[${ziqniContext.spaceName}] Webhook request with body [$json] to url [$PostToUrl] failed with status code [${response.statusCode}] and message [${response.content}]")
-			onFailure.apply(response)
-		}
-		else {
-			onSuccess(response)
-			logger.info(s"${DateTime.now()}[${ziqniContext.spaceName}] Webhook request to url [$PostToUrl] succeeded with status code [${response.statusCode}] and message [${response.content}]")
-		}
-
-	}
-
-	private def retry(call: () => HttpResponseEntity, delay: Int = 5000): HttpResponseEntity = {
-		var response: Option[HttpResponseEntity] = None
-		for (i <- 1 to 3) {
-			response = Try(call.apply()).toOption
-			if (response.exists(_.statusCode == 200)) {
-				return response.get
-			}
-			Thread.sleep(delay)
-		}
-		response.get
-	}
-
-	private def onRewardCreationError(reward: Option[BasicRewardModel], response: HttpResponseEntity) = {
-		reward.foreach(_.setMetaData(Map("error" -> response.content)))
-	}
-
-	private def handleRewardCreated(reward: Option[BasicRewardModel], response: HttpResponseEntity, ziqniContext: ZiqniContext) = {
-		try {
-			val bonusIdOpt = (ZiqniContext.fromJsonString(response.content) \ "bonusId").extractOpt[Int]
-			bonusIdOpt.foreach(bonusId => {
-				reward.foreach(_.setMetaData(Map("bonusId" -> bonusId.toString)))
-			})
-
-			val errorOpt = (ZiqniContext.fromJsonString(response.content) \ "error").extractOpt[String]
-			errorOpt.foreach(error => {
-				reward.foreach(_.setMetaData(Map("error" -> error)))
-			})
-		} catch {
-			case e: Throwable =>
-				logger.error(s"failed to extract bonusId from response ${response.content}", e)
-				reward.foreach(_.setMetaData(Map("error" -> e.getMessage)))
-				throw e
-		}
+	override def onEntityStateChanged(change: BasicEntityStateChanged, ziqniContext: ZiqniContext): Unit = {
+		super.onClassicEntityStateChanged(webHookSettings, change,ziqniContext)
 	}
 }
