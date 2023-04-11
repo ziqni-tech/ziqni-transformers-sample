@@ -1,47 +1,47 @@
 package com.ziqni.transformer.sample
 
-import com.ziqni.transformer.FastTrackSample
+import com.ziqni.transformer.FastTrackKafkaSample
 import com.ziqni.transformer.test.ZiqniTransformerTester
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, GivenWhenThen}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.must.Matchers
 
-class FastTrackSampleTest extends AnyFunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach with BeforeAndAfterAll {
+class FastTrackKafkaSampleTest extends AnyFunSpec with Matchers with GivenWhenThen with BeforeAndAfterEach with BeforeAndAfterAll {
 
   describe("Test the message queue receiver implementation") {
 
     val ziqniTransformerTester  = ZiqniTransformerTester.loadDefaultWithSampleData
-    val fastTrackSampleTransformer = new FastTrackSample
+    val fastTrackSampleTransformer = new FastTrackKafkaSample
 
     it("should receive a published user balance message") {
       
       Then("transform it into an event")
-      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_USER_BALANCES_UPDATE, Array.empty, FastTrackSampleTest.userBalancesUpdateV1,ziqniTransformerTester.ziqniContextExt)
+      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_USER_BALANCES_UPDATE, Array.empty, FastTrackKafkaSampleTest.userBalancesUpdateV1,ziqniTransformerTester.ziqniContextExt)
     }
 
     it("should receive a published payment message") {
       Then("transform it into an event")
-      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_PAYMENT, Array.empty, FastTrackSampleTest.paymentV1,ziqniTransformerTester.ziqniContextExt)
+      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_PAYMENT, Array.empty, FastTrackKafkaSampleTest.paymentV1,ziqniTransformerTester.ziqniContextExt)
     }
 
     it("should receive a published game round message") {
       Then("transform it into an event")
-      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_GAME_ROUND, Array.empty, FastTrackSampleTest.gameRoundV1,ziqniTransformerTester.ziqniContextExt)
+      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_GAME_ROUND, Array.empty, FastTrackKafkaSampleTest.gameRoundV1,ziqniTransformerTester.ziqniContextExt)
     }
 
     it("should receive a published user created message") {
       Then("transform it into an event")
-      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_USER_CREATE_V2, Array.empty, FastTrackSampleTest.userCreateV2,ziqniTransformerTester.ziqniContextExt)
+      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_USER_CREATE_V2, Array.empty, FastTrackKafkaSampleTest.userCreateV2,ziqniTransformerTester.ziqniContextExt)
     }
 
     it("should receive a published user login message") {
       Then("transform it into an event")
-      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_LOGIN_V2, Array.empty, FastTrackSampleTest.loginV2,ziqniTransformerTester.ziqniContextExt)
+      fastTrackSampleTransformer.kafka(fastTrackSampleTransformer.TOPIC_LOGIN_V2, Array.empty, FastTrackKafkaSampleTest.loginV2,ziqniTransformerTester.ziqniContextExt)
     }
   }
 
 }
-object FastTrackSampleTest {
+object FastTrackKafkaSampleTest {
   
   /**
    * https://www.fasttrack-solutions.com/en/resources/integration/real-time-data/login

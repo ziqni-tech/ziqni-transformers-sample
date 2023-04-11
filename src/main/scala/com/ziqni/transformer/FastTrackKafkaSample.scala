@@ -15,15 +15,16 @@ import scala.concurrent.ExecutionContextExecutor
 /**
  * Samples taken from https://www.fasttrack-solutions.com/en/resources/integration/real-time-data/registrations
  */
-class FastTrackSample extends ZiqniMqTransformer with LazyLogging {
+class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
 
   private implicit val formats: DefaultFormats.type = DefaultFormats
 
-  val TOPIC_USER_BALANCES_UPDATE = "USER_BALANCES_UPDATE"
   val TOPIC_PAYMENT = "PAYMENT"
+  val TOPIC_LOGIN_V2 = "LOGIN_V2"
   val TOPIC_GAME_ROUND = "GAME_ROUND"
   val TOPIC_USER_CREATE_V2 = "USER_CREATE_V2"
-  val TOPIC_LOGIN_V2 = "LOGIN_V2"
+  val TOPIC_USER_BALANCES_UPDATE = "USER_BALANCES_UPDATE"
+
   override def apply(message: Array[Byte], ziqniContext: ZiqniContext, args: Map[String, Any]): Unit = {
     implicit val z: ZiqniContext = ziqniContext
     implicit val e: ExecutionContextExecutor = ziqniContext.ziqniExecutionContext
