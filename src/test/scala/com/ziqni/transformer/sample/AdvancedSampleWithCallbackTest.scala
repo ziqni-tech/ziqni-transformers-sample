@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022. ZIQNI LTD registered in England and Wales, company registration number-09693684
+ * Copyright (c) 2023. ZIQNI LTD registered in England and Wales, company registration number-09693684
  */
 
 package com.ziqni.transformer.sample
@@ -23,7 +23,7 @@ class AdvancedSampleWithCallbackTest extends AnyFunSpec with Matchers with Given
 		it("should receive a published message and transform it into an event") {
 
 			val messageTypesList = Seq(
-				SampleTransformerTest.Transaction_Msq(10000, 20000)
+				AdvancedSampleTransformerTest.Transaction_Msq(10000, 20000)
 			)
 			val args: Map[String, Any] = Map.empty
 
@@ -55,7 +55,7 @@ class AdvancedSampleWithCallbackTest extends AnyFunSpec with Matchers with Given
 	}
 }
 
-object SampleTransformerTest {
+object AdvancedSampleTransformerTest {
 
 	val gamePhaseId = "test" + DateTime.now().getMillis
 	val txId = "testTID" + DateTime.now().getMillis
