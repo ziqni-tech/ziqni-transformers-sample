@@ -11,6 +11,7 @@ import org.json4s.DefaultFormats
 import org.json4s.jackson.parseJson
 
 import scala.concurrent.ExecutionContextExecutor
+import scala.language.implicitConversions
 
 /**
  * Samples taken from https://www.fasttrack-solutions.com/en/resources/integration/real-time-data/registrations
@@ -52,43 +53,64 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       throw new NotImplementedError(s"The topic [$topic] has not been implemented")
   }
 
-  private def handleUserBalancesUpdate(userBalancesUpdate: UserBalancesUpdate)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {}
-
-  private def handlePayment(payment: Payment)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {}
-
-  private def handleGameRound(gameRound: GameRound)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {}
-
-  private def handleUserCreateV2(userCreateV2: UserCreateV2)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {}
-
-  private def handleLoginV2(loginV2: LoginV2)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {}
-
-
-  /**
-   * These models were generated from the json object using https://transform.tools/json-to-scala-case-class
-   */
-  case class Balances(
-                       amount: Double,
-                       exchange_rate: Int,
-                       currency: String,
-                       key: String
-                     ) {
-    def asBasicEventModel: BasicEventModel = {
-      null
-    }
+  private def handleUserBalancesUpdate(userBalancesUpdate: UserBalancesUpdate)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
+    ziqniContext.ziqniApiAsync.pushEvents(userBalancesUpdate.asBasicEventModel)
   }
 
-  case class UserBalancesUpdate(
+  private def handlePayment(payment: Payment)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
+    ziqniContext.ziqniApiAsync.pushEvent(payment.asBasicEventModel)
+  }
+
+  private def handleGameRound(gameRound: GameRound)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
+    ziqniContext.ziqniApiAsync.pushEvent(gameRound.asBasicEventModel)
+  }
+
+  private def handleUserCreateV2(userCreateV2: UserCreateV2)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
+    ziqniContext.ziqniApiAsync.pushEvent(userCreateV2.asBasicEventModel)
+  }
+
+  private def handleLoginV2(loginV2: LoginV2)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
+    ziqniContext.ziqniApiAsync.pushEvent(loginV2.asBasicEventModel)
+  }
+
+  /// These models were generated from the json object using https://transform.tools/json-to-scala-case-class ///
+
+  private case class UserBalancesUpdate(
                                  user_id: String,
                                  timestamp: DateTime,
                                  origin: String,
-                                 balances: Seq[Balances]
+                                 balances: Seq[Balance]
                                ) {
-    def asBasicEventModel: BasicEventModel = {
-      null
+    def asBasicEventModel: Seq[BasicEventModel] = {
+      balances.map(balance =>
+        BasicEventModel(
+          memberId = None,
+          action = "user-balances-update",
+          tags = Seq.empty,
+          memberRefId = user_id,
+          eventRefId = null,
+          entityRefId = "system",
+          batchId = None,
+          sourceValue = balance.amount,
+          transactionTimestamp = timestamp,
+          metadata = Map.empty,
+          customFields = Map[String, CustomFieldEntry[Any]](
+            "exchange_rate" -> balance.exchange_rate,
+            "currency" -> balance.currency,
+            "key" -> balance.key
+          )
+        )
+      )
     }
   }
 
-  case class Payment(
+  private case class Balance(
+                       amount: Double,
+                       exchange_rate: Double,
+                       currency: String,
+                       key: String
+                     )
+  private case class Payment(
                       amount: Double,
                       bonus_code: String,
                       currency: String,
@@ -104,12 +126,33 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
                       vendor_id: String,
                       vendor_name: String
                     ) {
-    def asBasicEventModel: BasicEventModel = {
-      null
-    }
+    def asBasicEventModel: BasicEventModel = BasicEventModel(
+      memberId = None,
+      action = "payment",
+      tags = Seq.empty,
+      eventRefId = payment_id,
+      memberRefId = user_id,
+      entityRefId = vendor_id,
+      batchId = None,
+      sourceValue = amount,
+      transactionTimestamp = timestamp,
+      metadata = Map.empty,
+      customFields = Map[String, CustomFieldEntry[Any]](
+        "bonus_code" -> bonus_code,
+        "currency" -> currency,
+        "exchange_rate" -> exchange_rate,
+        "note" -> note,
+        "origin" -> origin,
+        "payment_id" -> payment_id,
+        "status" -> status,
+        "type" -> `type`,
+        "vendor_id" -> vendor_id,
+        "vendor_name" -> vendor_name
+      )
+    )
   }
 
-  case class GameRound(
+  private case class GameRound(
                         user_id: String,
                         round_id: String,
                         game_id: String,
@@ -135,7 +178,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       memberId = None,
       action = "game-round",
       tags = Seq.empty,
-      eventRefId = null,
+      eventRefId = round_id,
       memberRefId = user_id,
       entityRefId = game_id,
       batchId = None,
@@ -158,13 +201,13 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
     )
   }
 
-  case class Meta(
+  private case class Meta(
                    key1: Int,
                    key2: String,
                    key3: Boolean
                  )
 
-  case class UserCreateV2(
+  private case class UserCreateV2(
                            user_id: String,
                            url_referer: String,
                            note: String,
@@ -193,7 +236,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
     )
   }
 
-  case class LoginV2(
+  private case class LoginV2(
                       user_id: String,
                       is_impersonated: Boolean,
                       ip_address: String,
@@ -227,4 +270,6 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
   private implicit def toCustomFieldEntry(s: Boolean): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Text", s)
 
   private implicit def toCustomFieldEntry(s: Int): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Number", s)
+
+  private implicit def toCustomFieldEntry(s: Double): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Number", s)
 }

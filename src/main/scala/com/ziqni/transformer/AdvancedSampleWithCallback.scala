@@ -373,6 +373,7 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging wit
 	////////////////////////////////////////////////////////////
 	/// >>       WEBHOOK REPLACEMENT:: OPTIONAL           << ///
 	/// >> Replace old webhooks with system notifications << ///
+	/// >>        NOT RECOMMENDED, USE WEBHOOKS           << ///
 	////////////////////////////////////////////////////////////
 
 	/**
