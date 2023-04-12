@@ -34,23 +34,30 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
     val messageAsString = ZiqniContext.convertByteArrayToString(message)
     val jsValue = parseJson(messageAsString)
 
-    if (topic.exists(topic => topic.equalsIgnoreCase(TOPIC_USER_BALANCES_UPDATE)))
-      handleUserBalancesUpdate(jsValue.extract[UserBalancesUpdate])
+    args.get("topic").map(s => s.toString) match {
+      case Some(topic) =>
 
-    else if (topic.exists(topic => topic.equalsIgnoreCase(TOPIC_PAYMENT)))
-      handlePayment(jsValue.extract[Payment])
+        if (topic.equalsIgnoreCase(TOPIC_USER_BALANCES_UPDATE))
+          handleUserBalancesUpdate(jsValue.extract[UserBalancesUpdate])
 
-    else if (topic.exists(topic => topic.equalsIgnoreCase(TOPIC_GAME_ROUND)))
-      handleGameRound(jsValue.extract[GameRound])
+        if (topic.equalsIgnoreCase(TOPIC_USER_BALANCES_UPDATE))
+          handleUserBalancesUpdate(jsValue.extract[UserBalancesUpdate])
 
-    else if (topic.exists(topic => topic.equalsIgnoreCase(TOPIC_USER_CREATE_V2)))
-      handleUserCreateV2(jsValue.extract[UserCreateV2])
+        else if (topic.equalsIgnoreCase(TOPIC_PAYMENT))
+          handlePayment(jsValue.extract[Payment])
 
-    else if (topic.exists(topic => topic.equalsIgnoreCase(TOPIC_LOGIN_V2)))
-      handleLoginV2(jsValue.extract[LoginV2])
+        else if (topic.equalsIgnoreCase(TOPIC_GAME_ROUND))
+          handleGameRound(jsValue.extract[GameRound])
 
-    else
-      throw new NotImplementedError(s"The topic [$topic] has not been implemented")
+        else if (topic.equalsIgnoreCase(TOPIC_USER_CREATE_V2))
+          handleUserCreateV2(jsValue.extract[UserCreateV2])
+
+        else if (topic.equalsIgnoreCase(TOPIC_LOGIN_V2))
+          handleLoginV2(jsValue.extract[LoginV2])
+          
+      case _ =>
+        throw new NotImplementedError(s"The topic [$topic] has not been implemented")
+    }
   }
 
   private def handleUserBalancesUpdate(userBalancesUpdate: UserBalancesUpdate)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
