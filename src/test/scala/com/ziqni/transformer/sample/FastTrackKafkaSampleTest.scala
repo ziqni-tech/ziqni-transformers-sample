@@ -68,7 +68,7 @@ object FastTrackKafkaSampleTest {
                      |  "origin": "sub.example.com",
                      |  "payment_id": "23541",
                      |  "status": "Approved",
-                     |  "timestamp": "2015-03-02T8:27:58.721607Z"
+                     |  "timestamp": "2015-03-02T8:27:58.721607Z",
                      |  "type": "Debit",
                      |  "user_id": "7865312321",
                      |  "vendor_id": "562",
