@@ -95,7 +95,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       balances.map(balance =>
         BasicEventModel(
           memberId = None, // CAN BE NONE - IF NONE THEN LOOKUP OR CREATE, IF NOT NONE THEN CONFIRM
-          memberRefId = user_id, // CANNOT BE NULL
+          memberRefId = "user-balances-update-" + timestamp.getMillis.toString +"-"+ user_id, // CANNOT BE NULL
           action = "user-balances-update",
           tags = Seq.empty,
           eventRefId = "user-balances-update" + timestamp.getMillis.toString + balance.key,
@@ -258,7 +258,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       memberId = None,
       action = "login",
       tags = Seq.empty,
-      eventRefId = "login" + timestamp.getMillis.toString + user_id,
+      eventRefId = "login-" + timestamp.getMillis.toString +"-"+ user_id,
       memberRefId = user_id,
       entityRefId = "system",
       batchId = None,
