@@ -73,7 +73,10 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
   }
 
   private def handleUserCreateV2(userCreateV2: UserCreateV2)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
-    ziqniContext.ziqniApiAsync.pushEvent(userCreateV2.asBasicEventModel)
+    for {
+      newMemberId <- ziqniContext.ziqniApiAsync.createMember(memberReferenceId = userCreateV2.user_id, displayName = userCreateV2.user_id, tags = Seq.empty, metaData = None)
+      eventResult <- ziqniContext.ziqniApiAsync.pushEvent(userCreateV2.asBasicEventModel(newMemberId))
+    } yield eventResult
   }
 
   private def handleLoginV2(loginV2: LoginV2)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
@@ -223,8 +226,8 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
                            timestamp: DateTime,
                            origin: String
                          ) {
-    def asBasicEventModel: BasicEventModel = BasicEventModel(
-      memberId = None,
+    def asBasicEventModel(memberId: Option[String]): BasicEventModel = BasicEventModel(
+      memberId = memberId,
       action = "user-create",
       tags = Seq.empty,
       eventRefId = "user-create" + timestamp.getMillis.toString + user_id,
