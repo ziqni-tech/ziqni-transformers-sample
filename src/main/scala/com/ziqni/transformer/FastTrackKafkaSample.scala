@@ -122,11 +122,11 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
                      )
   private case class Payment(
                       amount: Double,
-                      bonus_code: String,
+                      bonus_code: Option[String],
                       currency: String,
                       exchange_rate: Double,
-                      fee_amount: Double,
-                      note: String,
+                      fee_amount: Option[Double],
+                      note: Option[String],
                       origin: String,
                       payment_id: String,
                       status: String,
@@ -134,7 +134,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
                       `type`: String,
                       user_id: String,
                       vendor_id: String,
-                      vendor_name: String
+                      vendor_name: Option[String]
                     ) {
     def asBasicEventModel: BasicEventModel = BasicEventModel(
       memberId = None,
@@ -148,16 +148,17 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       transactionTimestamp = timestamp,
       metadata = Map.empty,
       customFields = Map[String, CustomFieldEntry[Any]](
-        "bonus_code" -> bonus_code,
+        "bonus_code" -> bonus_code.getOrElse(""),
         "currency" -> currency,
         "exchange_rate" -> exchange_rate,
-        "note" -> note,
+        "note" -> note.getOrElse(""),
         "origin" -> origin,
         "payment_id" -> payment_id,
+        "fee_amount" -> fee_amount.getOrElse(0.0),
         "status" -> status,
         "type" -> `type`,
         "vendor_id" -> vendor_id,
-        "vendor_name" -> vendor_name
+        "vendor_name" -> vendor_name.getOrElse("")
       )
     )
   }
@@ -169,20 +170,20 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
                         game_name: String,
                         game_type: String,
                         vendor_id: String,
-                        vendor_name: String,
-                        real_bet_user: Int,
-                        real_win_user: Int,
-                        bonus_bet_user: Int,
-                        bonus_win_user: Int,
-                        real_bet_base: Int,
-                        real_win_base: Int,
-                        bonus_bet_base: Int,
-                        bonus_win_base: Int,
+                        vendor_name: Option[String],
+                        real_bet_user: Option[Double],
+                        real_win_user:  Option[Double],
+                        bonus_bet_user:  Option[Double],
+                        bonus_win_user:  Option[Double],
+                        real_bet_base:  Option[Double],
+                        real_win_base:  Option[Double],
+                        bonus_bet_base:  Option[Double],
+                        bonus_win_base:  Option[Double],
                         user_currency: String,
                         device_type: String,
                         timestamp: DateTime,
                         origin: String,
-                        meta: Meta
+                        meta: Option[Map[String,String]]
                       ) {
     def asBasicEventModel: BasicEventModel = BasicEventModel(
       memberId = None,
@@ -196,26 +197,20 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       transactionTimestamp = timestamp,
       customFields = Map[String, CustomFieldEntry[Any]](
         "round_id" -> round_id,
-        "real_bet_user" -> real_bet_user,
-        "real_win_user" -> real_win_user,
-        "bonus_bet_user" -> bonus_bet_user,
-        "bonus_win_user" -> bonus_win_user,
-        "real_bet_base" -> real_bet_base,
-        "real_win_base" -> real_win_base,
-        "bonus_bet_base" -> bonus_bet_base,
-        "bonus_win_base" -> bonus_win_base,
+        "real_bet_user" -> real_bet_user.getOrElse(0.0),
+        "real_win_user" -> real_win_user.getOrElse(0.0),
+        "bonus_bet_user" -> bonus_bet_user.getOrElse(0.0),
+        "bonus_win_user" -> bonus_win_user.getOrElse(0.0),
+        "real_bet_base" -> real_bet_base.getOrElse(0.0),
+        "real_win_base" -> real_win_base.getOrElse(0.0),
+        "bonus_bet_base" -> bonus_bet_base.getOrElse(0.0),
+        "bonus_win_base" -> bonus_win_base.getOrElse(0.0),
         "user_currency" -> user_currency,
         "device_type" -> device_type,
         "origin" -> origin,
       )
     )
   }
-
-  private case class Meta(
-                   key1: Int,
-                   key2: String,
-                   key3: Boolean
-                 )
 
   private case class UserCreateV2(
                            user_id: String,
