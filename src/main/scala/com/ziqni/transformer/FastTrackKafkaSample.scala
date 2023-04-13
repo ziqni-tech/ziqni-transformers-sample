@@ -54,7 +54,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
 
         else if (topic.equalsIgnoreCase(TOPIC_LOGIN_V2))
           handleLoginV2(jsValue.extract[LoginV2])
-          
+
       case _ =>
         throw new NotImplementedError(s"The topic [$topic] has not been implemented")
     }
@@ -86,16 +86,16 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
   /// These models were generated from the json object using https://transform.tools/json-to-scala-case-class ///
 
   private case class UserBalancesUpdate(
-                                 user_id: String,
-                                 timestamp: DateTime,
-                                 origin: String,
-                                 balances: Seq[Balance]
-                               ) {
+                                         user_id: String,
+                                         timestamp: DateTime,
+                                         origin: String,
+                                         balances: Seq[Balance]
+                                       ) {
     def asBasicEventModel: Seq[BasicEventModel] = {
       balances.map(balance =>
         BasicEventModel(
           memberId = None, // CAN BE NONE - IF NONE THEN LOOKUP OR CREATE, IF NOT NONE THEN CONFIRM
-          memberRefId = "user-balances-update-" + timestamp.getMillis.toString +"-"+ user_id, // CANNOT BE NULL
+          memberRefId = "user-balances-update-" + timestamp.getMillis.toString + "-" + user_id, // CANNOT BE NULL
           action = "user-balances-update",
           tags = Seq.empty,
           eventRefId = "user-balances-update" + timestamp.getMillis.toString + balance.key,
@@ -115,27 +115,28 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
   }
 
   private case class Balance(
-                       amount: Double,
-                       exchange_rate: Double,
-                       currency: String,
-                       key: String
-                     )
+                              amount: Double,
+                              exchange_rate: Double,
+                              currency: String,
+                              key: String
+                            )
+
   private case class Payment(
-                      amount: Double,
-                      bonus_code: Option[String],
-                      currency: String,
-                      exchange_rate: Double,
-                      fee_amount: Option[Double],
-                      note: Option[String],
-                      origin: String,
-                      payment_id: String,
-                      status: String,
-                      timestamp: DateTime,
-                      `type`: String,
-                      user_id: String,
-                      vendor_id: String,
-                      vendor_name: Option[String]
-                    ) {
+                              amount: Double,
+                              bonus_code: Option[String],
+                              currency: String,
+                              exchange_rate: Double,
+                              fee_amount: Option[Double],
+                              note: Option[String],
+                              origin: String,
+                              payment_id: String,
+                              status: String,
+                              timestamp: DateTime,
+                              `type`: String,
+                              user_id: String,
+                              vendor_id: String,
+                              vendor_name: Option[String]
+                            ) {
     def asBasicEventModel: BasicEventModel = BasicEventModel(
       memberId = None,
       action = "payment",
@@ -148,43 +149,43 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       transactionTimestamp = timestamp,
       metadata = Map.empty,
       customFields = Map[String, CustomFieldEntry[Any]](
-        "bonus_code" -> bonus_code.getOrElse(""),
+        "bonus_code" -> bonus_code,
         "currency" -> currency,
         "exchange_rate" -> exchange_rate,
-        "note" -> note.getOrElse(""),
+        "note" -> note,
         "origin" -> origin,
         "payment_id" -> payment_id,
-        "fee_amount" -> fee_amount.getOrElse(0.0),
+        "fee_amount" -> fee_amount,
         "status" -> status,
         "type" -> `type`,
         "vendor_id" -> vendor_id,
-        "vendor_name" -> vendor_name.getOrElse("")
+        "vendor_name" -> vendor_name
       )
     )
   }
 
   private case class GameRound(
-                        user_id: String,
-                        round_id: String,
-                        game_id: String,
-                        game_name: String,
-                        game_type: String,
-                        vendor_id: String,
-                        vendor_name: Option[String],
-                        real_bet_user: Option[Double],
-                        real_win_user:  Option[Double],
-                        bonus_bet_user:  Option[Double],
-                        bonus_win_user:  Option[Double],
-                        real_bet_base:  Option[Double],
-                        real_win_base:  Option[Double],
-                        bonus_bet_base:  Option[Double],
-                        bonus_win_base:  Option[Double],
-                        user_currency: String,
-                        device_type: String,
-                        timestamp: DateTime,
-                        origin: String,
-                        meta: Option[Map[String,String]]
-                      ) {
+                                user_id: String,
+                                round_id: String,
+                                game_id: String,
+                                game_name: String,
+                                game_type: String,
+                                vendor_id: String,
+                                vendor_name: Option[String],
+                                real_bet_user: Option[Double],
+                                real_win_user: Option[Double],
+                                bonus_bet_user: Option[Double],
+                                bonus_win_user: Option[Double],
+                                real_bet_base: Option[Double],
+                                real_win_base: Option[Double],
+                                bonus_bet_base: Option[Double],
+                                bonus_win_base: Option[Double],
+                                user_currency: String,
+                                device_type: String,
+                                timestamp: DateTime,
+                                origin: String,
+                                meta: Option[Map[String, String]]
+                              ) {
     def asBasicEventModel: BasicEventModel = BasicEventModel(
       memberId = None,
       action = "game-round",
@@ -197,14 +198,14 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       transactionTimestamp = timestamp,
       customFields = Map[String, CustomFieldEntry[Any]](
         "round_id" -> round_id,
-        "real_bet_user" -> real_bet_user.getOrElse(0.0),
-        "real_win_user" -> real_win_user.getOrElse(0.0),
-        "bonus_bet_user" -> bonus_bet_user.getOrElse(0.0),
-        "bonus_win_user" -> bonus_win_user.getOrElse(0.0),
-        "real_bet_base" -> real_bet_base.getOrElse(0.0),
-        "real_win_base" -> real_win_base.getOrElse(0.0),
-        "bonus_bet_base" -> bonus_bet_base.getOrElse(0.0),
-        "bonus_win_base" -> bonus_win_base.getOrElse(0.0),
+        "real_bet_user" -> real_bet_user,
+        "real_win_user" -> real_win_user,
+        "bonus_bet_user" -> bonus_bet_user,
+        "bonus_win_user" -> bonus_win_user,
+        "real_bet_base" -> real_bet_base,
+        "real_win_base" -> real_win_base,
+        "bonus_bet_base" -> bonus_bet_base,
+        "bonus_win_base" -> bonus_win_base,
         "user_currency" -> user_currency,
         "device_type" -> device_type,
         "origin" -> origin,
@@ -213,14 +214,14 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
   }
 
   private case class UserCreateV2(
-                           user_id: String,
-                           url_referer: String,
-                           note: String,
-                           user_agent: String,
-                           ip_address: String,
-                           timestamp: DateTime,
-                           origin: String
-                         ) {
+                                   user_id: String,
+                                   url_referer: String,
+                                   note: String,
+                                   user_agent: String,
+                                   ip_address: String,
+                                   timestamp: DateTime,
+                                   origin: String
+                                 ) {
     def asBasicEventModel(memberId: Option[String]): BasicEventModel = BasicEventModel(
       memberId = memberId,
       action = "user-create",
@@ -242,18 +243,18 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
   }
 
   private case class LoginV2(
-                      user_id: String,
-                      is_impersonated: Boolean,
-                      ip_address: String,
-                      user_agent: String,
-                      timestamp: DateTime,
-                      origin: String
-                    ) {
+                              user_id: String,
+                              is_impersonated: Boolean,
+                              ip_address: String,
+                              user_agent: String,
+                              timestamp: DateTime,
+                              origin: String
+                            ) {
     def asBasicEventModel: BasicEventModel = BasicEventModel(
       memberId = None,
       action = "login",
       tags = Seq.empty,
-      eventRefId = "login-" + timestamp.getMillis.toString +"-"+ user_id,
+      eventRefId = "login-" + timestamp.getMillis.toString + "-" + user_id,
       memberRefId = user_id,
       entityRefId = "system",
       batchId = None,
@@ -270,6 +271,8 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
 
   private implicit def toCustomFieldEntry(s: String): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Text", s)
 
+  private implicit def toCustomFieldEntryOptString(s: Option[String]): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Text", s.getOrElse(""))
+
   private implicit def toCustomFieldEntry(s: Array[String]): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("TextArray", s)
 
   private implicit def toCustomFieldEntry(s: Boolean): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Text", s)
@@ -277,4 +280,6 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
   private implicit def toCustomFieldEntry(s: Int): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Number", s)
 
   private implicit def toCustomFieldEntry(s: Double): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Number", s)
+
+  private implicit def toCustomFieldEntryOptDouble(s: Option[Double]): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Number", s.getOrElse(0.0))
 }
