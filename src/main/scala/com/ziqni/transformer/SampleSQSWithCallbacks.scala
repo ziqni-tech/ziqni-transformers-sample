@@ -1,6 +1,6 @@
 package com.ziqni.transformer
 
-import com.ziqni.transformers.domain.{BasicEntityChanged, BasicEntityStateChanged, BasicEventModel, CustomFieldEntry}
+import com.ziqni.transformers.domain.{BasicEntityChangeSubscriptionRequest, BasicEntityChanged, BasicEntityStateChanged, BasicEventModel, CustomFieldEntry}
 import com.ziqni.transformers.webhooks.{CustomWebhookSettings, CustomWebhooks}
 import com.ziqni.transformers.{ZiqniContext, ZiqniMqTransformer}
 import org.joda.time.DateTime
