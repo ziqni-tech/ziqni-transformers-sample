@@ -12,11 +12,11 @@ import org.json4s.{DefaultFormats, JArray, JValue, JsonAST}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging with ClassicWebhooks {
+class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging with CustomWebhooks {
 	private implicit val formats: DefaultFormats.type = DefaultFormats
 
 	// Callback example
-	val webHookSettings = ClassicWebhookSettings(url = "SOME-URL-TO-POST-TO")
+	val webHookSettings = CustomWebhookSettings(url = "SOME-URL-TO-POST-TO")
 
 	// JSON keys
 	val ACTION_KEY = "action"
@@ -385,10 +385,10 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging wit
 	override def getEntityChangeSubscriptionRequest(ziqniContext: ZiqniContext): Seq[BasicEntityChangeSubscriptionRequest] = webHookSettings.classicEntityChangeSubscriptionRequest
 
 	override def onEntityChanged(change: BasicEntityChanged, ziqniContext: ZiqniContext): Unit = {
-		super.onClassicEntityChanged(webHookSettings, change,ziqniContext)
+		super.onCustomEntityChanged(webHookSettings, change,ziqniContext)
 	}
 
 	override def onEntityStateChanged(change: BasicEntityStateChanged, ziqniContext: ZiqniContext): Unit = {
-		super.onClassicEntityStateChanged(webHookSettings, change,ziqniContext)
+		super.onCustomEntityStateChanged(webHookSettings, change,ziqniContext)
 	}
 }
