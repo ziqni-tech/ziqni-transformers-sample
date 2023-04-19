@@ -13,7 +13,7 @@
 
     <properties>
 
-        <ziqni.transformers.version>1.0.11</ziqni.transformers.version>
+        <ziqni.transformers.version>1.0.13</ziqni.transformers.version>
         <!--Test scope-->
         <ziqni.transformers.test.version>0.0.1-alpha</ziqni.transformers.test.version>
         <ziqni.admin.version>1.0.12</ziqni.admin.version>
