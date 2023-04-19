@@ -73,11 +73,11 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks {
    */
   override def getEntityChangeSubscriptionRequest(ziqniContext: ZiqniContext): Seq[BasicEntityChangeSubscriptionRequest] = webHookSettings.classicEntityChangeSubscriptionRequest
 
-  override def onEntityChanged(change: BasicEntityChanged, ziqniContext: ZiqniContext): Unit = super.onCustomEntityChanged(webHookSettings, change, ziqniContext)
-
-  override def onEntityStateChanged(change: BasicEntityStateChanged, ziqniContext: ZiqniContext): Unit = super.onCustomEntityStateChanged(webHookSettings, change, ziqniContext)
+  override def onEntityChanged(change: BasicEntityChanged, ziqniContext: ZiqniContext): Unit = onCustomEntityChanged(webHookSettings, change, ziqniContext)
 
   override def onCustomEntityChanged(settings: CustomWebhookSettings, change: BasicEntityChanged, ziqniContext: ZiqniContext): Unit = super.onCustomEntityChanged(settings, change, ziqniContext)
+
+  override def onEntityStateChanged(change: BasicEntityStateChanged, ziqniContext: ZiqniContext): Unit = onCustomEntityStateChanged(webHookSettings, change, ziqniContext)
 
   override def onCustomEntityStateChanged(settings: CustomWebhookSettings, change: BasicEntityStateChanged, ziqniContext: ZiqniContext): Unit = super.onCustomEntityStateChanged(settings, change, ziqniContext)
 
