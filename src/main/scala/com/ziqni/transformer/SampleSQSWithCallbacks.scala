@@ -151,7 +151,7 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
    * @param playerId            playerId - required
    * @param status              Transaction status - can be skipped
    */
-  case class ReevoEventMessage(
+  case class SampleEventMessage(
                                 gameId: Int, // Product Ref ID
                                 date: Long, // Transaction Time
                                 bet_type: String, // Action
