@@ -1,6 +1,6 @@
 package com.ziqni.transformer
 
-import com.ziqni.transformers.domain.{BasicEntityChangeSubscriptionRequest, BasicEntityChanged, BasicEntityStateChanged, BasicEventModel, CustomFieldEntry}
+import com.ziqni.transformers.domain._
 import com.ziqni.transformers.webhooks.{CustomWebhookSettings, CustomWebhooks}
 import com.ziqni.transformers.{ZiqniContext, ZiqniMqTransformer}
 import org.joda.time.DateTime
@@ -9,12 +9,15 @@ import org.json4s.jackson.parseJson
 
 import java.util.Objects
 
-class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks {
-
+class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with CustomFieldEntryImplicits {
   private implicit val formats: DefaultFormats.type = DefaultFormats
+
   private val Number: String = "Number"
   private val Text: String = "Text"
   private val PostToUrl: String = "<<some-url>>"
+
+
+  implicit def toBooleanCustomFieldEntry(v: Boolean): CustomFieldEntryText = CustomFieldEntryText(v.toString)
 
   /**
    * Handle incoming message from SQS
@@ -81,45 +84,44 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks {
 
   override def onCustomEntityStateChanged(settings: CustomWebhookSettings, change: BasicEntityStateChanged, ziqniContext: ZiqniContext): Unit = super.onCustomEntityStateChanged(settings, change, ziqniContext)
 
-  override def onNewProduct()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onNewProduct()
 
-  override def onNewMember()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onNewMember()
+  override def onNewProduct()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onNewProduct()
 
-  override def onCompetitionCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionCreated()
+  override def onNewMember()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onNewMember()
 
-  override def onCompetitionStarted()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionStarted()
+  override def onCompetitionCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionCreated()
 
-  override def onCompetitionFinished()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionFinished()
+  override def onCompetitionStarted()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionStarted()
 
-  override def onCompetitionCancelled()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionCancelled()
+  override def onCompetitionFinished()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionFinished()
 
-  override def onCompetitionRewardIssued()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionRewardIssued()
+  override def onCompetitionCancelled()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionCancelled()
 
-  override def onContestCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestCreated()
+  override def onCompetitionRewardIssued()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onCompetitionRewardIssued()
 
-  override def onContestStarted()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestStarted()
+  override def onContestCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestCreated()
 
-  override def onContestFinished()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestFinished()
+  override def onContestStarted()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestStarted()
 
-  override def onContestFinalised()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestFinalised()
+  override def onContestFinished()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestFinished()
 
-  override def onContestCancelled()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestCancelled()
+  override def onContestFinalised()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestFinalised()
 
-  override def onContestRewardCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestRewardCreated()
+  override def onContestCancelled()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestCancelled()
 
-  override def onContestRewardIssued()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestRewardIssued()
+  override def onContestRewardCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestRewardCreated()
 
-  override def onContestRewardClaimed()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestRewardClaimed()
+  override def onContestRewardIssued()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestRewardIssued()
 
-  override def onAchievementRewardCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementRewardCreated()
+  override def onContestRewardClaimed()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onContestRewardClaimed()
 
-  override def onAchievementRewardIssued()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementRewardIssued()
+  override def onAchievementCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementCreated()
 
-  override def onAchievementRewardClaimed()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementRewardClaimed()
+  override def onAchievementRewardCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementRewardCreated()
 
-  override def onAchievementCreated()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementCreated()
+  override def onAchievementRewardIssued()(implicit settings: CustomWebhookSettings, basicEntityChanged: BasicEntityChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementRewardIssued()
 
-
+  override def onAchievementRewardClaimed()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementRewardClaimed()
 
   /**
    *
@@ -177,21 +179,21 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks {
                                 status: String
                               ) {
     def asBasicEventModel: BasicEventModel = {
-      val customFields = Map[String, CustomFieldEntry[Any]](
-        "bonus" -> CustomFieldEntry(Number, bonus),
-        "freeroundwin" -> CustomFieldEntry(Number, freeRoundWin),
-        "bonusbet" -> CustomFieldEntry(Number, bonusBet),
-        "jackpotcontribution" -> CustomFieldEntry(Number, jackpotContribution),
-        "operatorid" -> CustomFieldEntry(Number, operatorId),
-        "agentid" -> CustomFieldEntry(Number, agentId),
-        "playersessionid" -> CustomFieldEntry(Text, playerSessionId),
-        "ticket" -> CustomFieldEntry(Text, ticket),
-        "transid" -> CustomFieldEntry(Text, transId),
-        "sessionid" -> CustomFieldEntry(Text, sessionId),
-        "gamesessionid" -> CustomFieldEntry(Text, gameSessionId),
-        "provider" -> CustomFieldEntry(Text, provider),
-        "requestid" -> CustomFieldEntry(Text, requestId),
-        "status" -> CustomFieldEntry(Text, status)
+      val customFields = Map[String, CustomFieldEntry[_<:Any]](
+        "bonus" -> bonus,
+        "freeroundwin" -> freeRoundWin,
+        "bonusbet" -> bonusBet,
+        "jackpotcontribution" -> jackpotContribution,
+        "operatorid" -> operatorId,
+        "agentid" -> agentId,
+        "playersessionid" -> playerSessionId,
+        "ticket" -> ticket,
+        "transid" -> transId,
+        "sessionid" -> sessionId,
+        "gamesessionid" -> gameSessionId,
+        "provider" -> provider,
+        "requestid" -> requestId,
+        "status" -> status
       )
 
       val nonNegativeAmount = if (Objects.nonNull(amount) && amount >= 0) amount else amount * (-1)

@@ -4,7 +4,7 @@
 package com.ziqni.transformer
 
 import com.typesafe.scalalogging.LazyLogging
-import com.ziqni.transformers.domain.{BasicEventModel, CustomFieldEntry}
+import com.ziqni.transformers.domain._
 import com.ziqni.transformers.{ZiqniContext, ZiqniMqTransformer}
 import org.joda.time.DateTime
 import org.json4s.DefaultFormats
@@ -16,7 +16,7 @@ import scala.language.implicitConversions
 /**
  * Samples taken from https://www.fasttrack-solutions.com/en/resources/integration/real-time-data/registrations
  */
-class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
+class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with CustomFieldEntryImplicits{
 
   private implicit val formats: DefaultFormats.type = DefaultFormats
 
@@ -25,6 +25,10 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
   val TOPIC_GAME_ROUND = "GAME_ROUND"
   val TOPIC_USER_CREATE_V2 = "USER_CREATE_V2"
   val TOPIC_USER_BALANCES_UPDATE = "USER_BALANCES_UPDATE"
+
+  implicit def booleanToCustomFieldEntry(v: Boolean): CustomFieldEntryText = CustomFieldEntryText(v.toString)
+  implicit def optionToDoubleCustomFieldEntry(v: Option[Double]): CustomFieldEntryNumber = CustomFieldEntryNumber(v.getOrElse(0.0))
+  implicit def optionToStringCustomFieldEntry(v: Option[String]): CustomFieldEntryText = CustomFieldEntryText(v.getOrElse(""))
 
   override def apply(message: Array[Byte], ziqniContext: ZiqniContext, args: Map[String, Any]): Unit = {
     implicit val z: ZiqniContext = ziqniContext
@@ -104,7 +108,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
           sourceValue = balance.amount,
           transactionTimestamp = timestamp,
           metadata = Map.empty,
-          customFields = Map[String, CustomFieldEntry[Any]](
+          customFields = Map[String, CustomFieldEntry[_<:Any]](
             "exchange_rate" -> balance.exchange_rate,
             "currency" -> balance.currency,
             "key" -> balance.key
@@ -148,7 +152,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       sourceValue = amount,
       transactionTimestamp = timestamp,
       metadata = Map.empty,
-      customFields = Map[String, CustomFieldEntry[Any]](
+      customFields = Map[String, CustomFieldEntry[_<:Any]](
         "bonus_code" -> bonus_code,
         "currency" -> currency,
         "exchange_rate" -> exchange_rate,
@@ -196,7 +200,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       batchId = None,
       sourceValue = 1,
       transactionTimestamp = timestamp,
-      customFields = Map[String, CustomFieldEntry[Any]](
+      customFields = Map[String, CustomFieldEntry[_<:Any]](
         "round_id" -> round_id,
         "real_bet_user" -> real_bet_user,
         "real_win_user" -> real_win_user,
@@ -232,7 +236,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       batchId = None,
       sourceValue = 1,
       transactionTimestamp = timestamp,
-      customFields = Map[String, CustomFieldEntry[Any]](
+      customFields = Map[String, CustomFieldEntry[_<:Any]](
         "url_referer" -> url_referer,
         "note" -> note,
         "user_agent" -> user_agent,
@@ -260,7 +264,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       batchId = None,
       sourceValue = 1,
       transactionTimestamp = timestamp,
-      customFields = Map[String, CustomFieldEntry[Any]](
+      customFields = Map[String, CustomFieldEntry[_<:Any]](
         "is_impersonated" -> is_impersonated,
         "ip_address" -> ip_address,
         "user_agent" -> user_agent,
@@ -268,18 +272,4 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging {
       )
     )
   }
-
-  private implicit def toCustomFieldEntry(s: String): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Text", s)
-
-  private implicit def toCustomFieldEntryOptString(s: Option[String]): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Text", s.getOrElse(""))
-
-  private implicit def toCustomFieldEntry(s: Array[String]): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("TextArray", s)
-
-  private implicit def toCustomFieldEntry(s: Boolean): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Text", s)
-
-  private implicit def toCustomFieldEntry(s: Int): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Number", s)
-
-  private implicit def toCustomFieldEntry(s: Double): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Number", s)
-
-  private implicit def toCustomFieldEntryOptDouble(s: Option[Double]): CustomFieldEntry[Any] = new CustomFieldEntry[Any]("Number", s.getOrElse(0.0))
 }
