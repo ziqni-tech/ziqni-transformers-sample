@@ -27,13 +27,13 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
     val messageAsString = ZiqniContext.convertByteArrayToString(message)
 
     parseJson(messageAsString)
-      .extract[List[ReevoEventMessage]]
+      .extract[List[SampleEventMessage]]
       .foreach(a1 =>
         handleEvent(a1)
       )
   }
 
-  private def handleEvent(reevoEventMessage: ReevoEventMessage)(implicit ziqniContext: ZiqniContext): Unit = {
+  private def handleEvent(reevoEventMessage: SampleEventMessage)(implicit ziqniContext: ZiqniContext): Unit = {
     ziqniContext.ziqniApiAsync.pushEventTransaction(reevoEventMessage.asBasicEventModel)
   }
 
