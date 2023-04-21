@@ -8,12 +8,11 @@ import org.json4s.DefaultFormats
 import org.json4s.jackson.parseJson
 
 import java.util.Objects
+import scala.language.implicitConversions
 
 class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with CustomFieldEntryImplicits {
   private implicit val formats: DefaultFormats.type = DefaultFormats
 
-  private val Number: String = "Number"
-  private val Text: String = "Text"
   private val PostToUrl: String = "<<some-url>>"
 
 
@@ -151,7 +150,7 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
    * @param playerId            playerId - required
    * @param status              Transaction status - can be skipped
    */
-  case class SampleEventMessage(
+  private case class SampleEventMessage(
                                 gameId: Int, // Product Ref ID
                                 date: Long, // Transaction Time
                                 bet_type: String, // Action
