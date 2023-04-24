@@ -121,7 +121,7 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
 
   override def onAchievementRewardClaimed()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementRewardClaimed()
 
-  case class DefaultEvent(
+  private case class DefaultEvent(
                             memberRefId: String,
                             action: String,
                             batchId: Option[String],
