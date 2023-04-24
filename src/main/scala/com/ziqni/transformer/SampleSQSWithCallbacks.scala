@@ -133,7 +133,49 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
                                    memberId: Option[String],
                                    customFields: Map[String, Any]
                                  ) extends CustomFieldEntryImplicits {
+
+    def fromByteArray(message: Array[Byte]): DefaultEvent = {
+      implicit val formats: DefaultFormats.type = DefaultFormats
+      val messageAsString = ZiqniContext.convertByteArrayToString(message)
+      parseJson(messageAsString).extract[DefaultEvent]
+    }
+
     def asBasicEventModel: BasicEventModel = {
+
+      def handleSeq(key: String, list: Seq[_]): (String, CustomFieldEntry[_ <: Any]) = {
+        list.headOption.map {
+          case _: String =>
+            (key, toStringList(list))
+          case _: Boolean =>
+            (key, toStringList(list))
+
+          case _: Int =>
+            (key, toNumList(list))
+          case _: Double =>
+            (key, toNumList(list))
+          case _: Long =>
+            (key, toNumList(list))
+          case _ =>
+            (key, CustomFieldEntryText(""))
+
+        }.getOrElse((key, toNumList(list)))
+      }
+
+      def toStringList(s: Seq[_ <: Any]): CustomFieldEntry[_ <: Any] = {
+        CustomFieldEntryTextArray(s.map {
+          case s: String => s
+          case b: Boolean => b.toString.toLowerCase
+          case s: Any => s.toString
+        })
+      }
+
+      def toNumList(s: Seq[_ <: Any]): CustomFieldEntry[_ <: Any] = {
+        CustomFieldEntryNumberArray(s.map {
+          case in: Int => in.toDouble
+          case in: Double => in
+          case in: Long => in.toDouble
+        })
+      }
 
       val cf: Map[String, CustomFieldEntry[_ <: Any]] = this.customFields.map(customFields => customFields._2 match {
         case in: String =>
@@ -146,15 +188,10 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
           (customFields._1, in)
         case in: Boolean =>
           (customFields._1, in)
-
-        case in: List[String] =>
-          (customFields._1, in)
-        case in: List[Int] =>
-          (customFields._1, in)
-        case in: List[Double] =>
-          (customFields._1, in)
-        case in: List[Long] =>
-          (customFields._1, in)
+        case list: List[_] =>
+          handleSeq(customFields._1, list)
+        case list: Seq[_] =>
+          handleSeq(customFields._1, list)
         case _ =>
           (customFields._1, CustomFieldEntryText(""))
       })
@@ -172,4 +209,5 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
         customFields = cf
       )
     }
+  }
 }
