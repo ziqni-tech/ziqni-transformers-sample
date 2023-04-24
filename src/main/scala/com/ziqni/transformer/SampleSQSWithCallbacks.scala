@@ -173,3 +173,4 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
       )
     }
 }
+}
