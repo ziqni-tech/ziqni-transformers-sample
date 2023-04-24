@@ -107,7 +107,6 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
           batchId = None,
           sourceValue = balance.amount,
           transactionTimestamp = timestamp,
-          metadata = Map.empty,
           customFields = Map[String, CustomFieldEntry[_<:Any]](
             "exchange_rate" -> balance.exchange_rate,
             "currency" -> balance.currency,
@@ -151,7 +150,6 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
       batchId = None,
       sourceValue = amount,
       transactionTimestamp = timestamp,
-      metadata = Map.empty,
       customFields = Map[String, CustomFieldEntry[_<:Any]](
         "bonus_code" -> bonus_code,
         "currency" -> currency,

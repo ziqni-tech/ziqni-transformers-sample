@@ -174,7 +174,6 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging wit
 						entityRefId = gameCode,
 						batchId = Option(gamePhaseId),
 						sourceValue = (playBonusWinAmount / 100),
-						metadata = customFields.toMap,
 						transactionTimestamp = timestamp
 					)
 
@@ -191,7 +190,6 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging wit
 						entityRefId = gameCode,
 						batchId = Option(gamePhaseId),
 						sourceValue = (jackpotWinAmount / 100),
-						metadata = customFields.toMap,
 						transactionTimestamp = timestamp
 					)
 
@@ -208,7 +206,6 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging wit
 						entityRefId = gameCode,
 						batchId = Option(gamePhaseId),
 						sourceValue = (additionalJackpotWinAmount / 100),
-						metadata = customFields.toMap,
 						transactionTimestamp = timestamp
 					)
 
@@ -226,7 +223,6 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging wit
 						entityRefId = gameCode,
 						batchId = Option(gamePhaseId),
 						sourceValue = winMultiplier,
-						metadata = customFields.toMap,
 						transactionTimestamp = timestamp
 					)
 
@@ -242,7 +238,6 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging wit
 					entityRefId = gameCode,
 					batchId = Option(gamePhaseId),
 					sourceValue = totalBet,
-					metadata = customFields.toMap,
 					transactionTimestamp = timestamp
 				)
 
@@ -257,7 +252,6 @@ class AdvancedSampleWithCallback extends ZiqniMqTransformer with LazyLogging wit
 					entityRefId = gameCode,
 					batchId = Option(gamePhaseId),
 					sourceValue = totalWin,
-					metadata = customFields.toMap,
 					transactionTimestamp = timestamp
 				)
 
