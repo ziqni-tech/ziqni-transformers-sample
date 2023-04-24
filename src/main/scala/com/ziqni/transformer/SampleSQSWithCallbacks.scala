@@ -7,7 +7,6 @@ import org.joda.time.DateTime
 import org.json4s.DefaultFormats
 import org.json4s.jackson.parseJson
 
-import java.util.Objects
 import scala.language.implicitConversions
 
 class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with CustomFieldEntryImplicits {
@@ -26,13 +25,13 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
     val messageAsString = ZiqniContext.convertByteArrayToString(message)
 
     parseJson(messageAsString)
-      .extract[List[SampleEventMessage]]
+      .extract[List[DefaultEvent]]
       .foreach(a1 =>
         handleEvent(a1)
       )
   }
 
-  private def handleEvent(reevoEventMessage: SampleEventMessage)(implicit ziqniContext: ZiqniContext): Unit = {
+  private def handleEvent(reevoEventMessage: DefaultEvent)(implicit ziqniContext: ZiqniContext): Unit = {
     ziqniContext.ziqniApiAsync.pushEventTransaction(reevoEventMessage.asBasicEventModel)
   }
 
@@ -122,81 +121,45 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
 
   override def onAchievementRewardClaimed()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementRewardClaimed()
 
-  /**
-   *
-   * @param gameId              Id of the game - required
-   * @param date                timestamp of transaction - required
-   * @param bet_type            bet type (bet/win) - required
-   * @param bonus               bonus win ( not used currently always 0 can be used in future) - required
-   * @param freeRoundWin        Freeround win - required
-   * @param bonusBet            Not currently used , can be used in future
-   * @param jackpotContribution Jackpot contribution - required
-   * @param operatorId          OperatorId - required
-   * @param agentId             AgentID - required
-   * @param playerSessionId     PlayersessionId - required
-   * @param currency            Currency - required
-   * @param bonusWin            bonusWin ( not used currently always 0 can be used in future) - required
-   * @param amount              amount (bet / win amount) - required
-   * @param ticket              ticket (roundId) - required
-   * @param transId             transId - required
-   * @param gameTitle           gameTitle - required
-   * @param system_out          system_out - can be skipped
-   * @param date_end            date_end - can be skipped
-   * @param sessionId           sessionId - required
-   * @param date_start          date_start - can be skipped
-   * @param gameSessionId       gamesessionId - required
-   * @param provider            game provider code - required
-   * @param requestId           requestId - required
-   * @param playerId            playerId - required
-   * @param status              Transaction status - can be skipped
-   */
-  private case class SampleEventMessage(
-                                gameId: Int, // Product Ref ID
-                                date: Long, // Transaction Time
-                                bet_type: String, // Action
-                                bonus: Int,
-                                freeRoundWin: Int,
-                                bonusBet: Int,
-                                jackpotContribution: Int,
-                                operatorId: Int,
-                                agentId: Int,
-                                playerSessionId: String,
-                                currency: String,
-                                bonusWin: Int,
-                                amount: Double, // Source value
-                                ticket: String,
-                                transId: String,
-                                gameTitle: String,
-                                system_out: Int,
-                                date_end: String,
-                                sessionId: String,
-                                date_start: String,
-                                gameSessionId: String,
-                                provider: String,
-                                requestId: String,
-                                playerId: Int, // Member Ref ID
-                                status: String
-                              ) {
+  case class DefaultEvent(
+                            memberRefId: String,
+                            action: String,
+                            batchId: Option[String],
+                            entityRefId: String,
+                            sourceValue: Double,
+                            transactionTimestamp: DateTime,
+                            tags: scala.Seq[String],
+                            eventRefId: String,
+                            memberId: Option[String],
+                            customFields: Map[String,Any]
+                          ) {
     def asBasicEventModel: BasicEventModel = {
-      val customFields = Map[String, CustomFieldEntry[_<:Any]](
-        "bonus" -> bonus,
-        "freeroundwin" -> freeRoundWin,
-        "bonusbet" -> bonusBet,
-        "jackpotcontribution" -> jackpotContribution,
-        "operatorid" -> operatorId,
-        "agentid" -> agentId,
-        "playersessionid" -> playerSessionId,
-        "ticket" -> ticket,
-        "transid" -> transId,
-        "sessionid" -> sessionId,
-        "gamesessionid" -> gameSessionId,
-        "provider" -> provider,
-        "requestid" -> requestId,
-        "status" -> status
-      )
 
-      val nonNegativeAmount = if (Objects.nonNull(amount) && amount >= 0) amount else amount * (-1)
-      BasicEventModel(None, playerId.toString, gameId.toString, transId, None, bet_type, nonNegativeAmount, new DateTime(date), Seq.empty, Map.empty, customFields)
+      val cf:Map[String,CustomFieldEntry[_<:Any]] = this.customFields.map(customFields => customFields._2 match {
+        case in:String =>
+          ( customFields._1 ,CustomFieldEntryText(in) )
+        case in:Int =>
+          ( customFields._1 ,CustomFieldEntryNumber(in) )
+        case in:Double =>
+          ( customFields._1 ,CustomFieldEntryNumber(in) )
+        case in:Long =>
+          ( customFields._1 ,CustomFieldEntryNumber(in) )
+        case in:Boolean =>
+          ( customFields._1 ,CustomFieldEntryText(in.toString.toLowerCase()))
+      })
+
+      BasicEventModel(
+        memberId = memberId,
+        memberRefId = memberRefId,
+        entityRefId = entityRefId,
+        eventRefId = entityRefId,
+        batchId =  batchId,
+        action = action,
+        sourceValue = sourceValue,
+        transactionTimestamp = transactionTimestamp,
+        tags = tags,
+        customFields = cf
+      )
     }
   }
 }
