@@ -122,30 +122,41 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
   override def onAchievementRewardClaimed()(implicit settings: CustomWebhookSettings, basicEntityStateChanged: BasicEntityStateChanged, timestamp: DateTime, additionalFields: Map[String, Any], ziqniContext: ZiqniContext): Unit = super.onAchievementRewardClaimed()
 
   private case class DefaultEvent(
-                            memberRefId: String,
-                            action: String,
-                            batchId: Option[String],
-                            entityRefId: String,
-                            sourceValue: Double,
-                            transactionTimestamp: DateTime,
-                            tags: scala.Seq[String],
-                            eventRefId: String,
-                            memberId: Option[String],
-                            customFields: Map[String,Any]
-                          ) {
+                                   memberRefId: String,
+                                   action: String,
+                                   batchId: Option[String],
+                                   entityRefId: String,
+                                   sourceValue: Double,
+                                   transactionTimestamp: DateTime,
+                                   tags: scala.Seq[String],
+                                   eventRefId: String,
+                                   memberId: Option[String],
+                                   customFields: Map[String, Any]
+                                 ) extends CustomFieldEntryImplicits {
     def asBasicEventModel: BasicEventModel = {
 
-      val cf:Map[String,CustomFieldEntry[_<:Any]] = this.customFields.map(customFields => customFields._2 match {
-        case in:String =>
-          ( customFields._1 ,CustomFieldEntryText(in) )
-        case in:Int =>
-          ( customFields._1 ,CustomFieldEntryNumber(in) )
-        case in:Double =>
-          ( customFields._1 ,CustomFieldEntryNumber(in) )
-        case in:Long =>
-          ( customFields._1 ,CustomFieldEntryNumber(in) )
-        case in:Boolean =>
-          ( customFields._1 ,CustomFieldEntryText(in.toString.toLowerCase()))
+      val cf: Map[String, CustomFieldEntry[_ <: Any]] = this.customFields.map(customFields => customFields._2 match {
+        case in: String =>
+          (customFields._1, in)
+        case in: Int =>
+          (customFields._1, in)
+        case in: Double =>
+          (customFields._1, in)
+        case in: Long =>
+          (customFields._1, in)
+        case in: Boolean =>
+          (customFields._1, in)
+
+        case in: List[String] =>
+          (customFields._1, in)
+        case in: List[Int] =>
+          (customFields._1, in)
+        case in: List[Double] =>
+          (customFields._1, in)
+        case in: List[Long] =>
+          (customFields._1, in)
+        case _ =>
+          (customFields._1, CustomFieldEntryText(""))
       })
 
       BasicEventModel(
@@ -153,7 +164,7 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
         memberRefId = memberRefId,
         entityRefId = entityRefId,
         eventRefId = entityRefId,
-        batchId =  batchId,
+        batchId = batchId,
         action = action,
         sourceValue = sourceValue,
         transactionTimestamp = transactionTimestamp,
@@ -161,5 +172,4 @@ class SampleSQSWithCallbacks extends ZiqniMqTransformer with CustomWebhooks with
         customFields = cf
       )
     }
-  }
 }
