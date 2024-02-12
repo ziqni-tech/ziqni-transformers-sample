@@ -65,26 +65,26 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
   }
 
   private def handleUserBalancesUpdate(userBalancesUpdate: UserBalancesUpdate)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
-    ziqniContext.ziqniApiAsync.pushEvents(userBalancesUpdate.asBasicEventModel)
+    ziqniContext.ziqniApiAsync.pushEvents(userBalancesUpdate.asZiqniEvent)
   }
 
   private def handlePayment(payment: Payment)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
-    ziqniContext.ziqniApiAsync.pushEvent(payment.asBasicEventModel)
+    ziqniContext.ziqniApiAsync.pushEvent(payment.asZiqniEvent)
   }
 
   private def handleGameRound(gameRound: GameRound)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
-    ziqniContext.ziqniApiAsync.pushEvent(gameRound.asBasicEventModel)
+    ziqniContext.ziqniApiAsync.pushEvent(gameRound.asZiqniEvent)
   }
 
   private def handleUserCreateV2(userCreateV2: UserCreateV2)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
     for {
       newMemberId <- ziqniContext.ziqniApiAsync.createMember(memberReferenceId = userCreateV2.user_id, displayName = userCreateV2.user_id, tags = Seq.empty, metaData = None)
-      eventResult <- ziqniContext.ziqniApiAsync.pushEvent(userCreateV2.asBasicEventModel(newMemberId))
+      eventResult <- ziqniContext.ziqniApiAsync.pushEvent(userCreateV2.asZiqniEvent(newMemberId))
     } yield eventResult
   }
 
   private def handleLoginV2(loginV2: LoginV2)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
-    ziqniContext.ziqniApiAsync.pushEvent(loginV2.asBasicEventModel)
+    ziqniContext.ziqniApiAsync.pushEvent(loginV2.asZiqniEvent)
   }
 
   /// These models were generated from the json object using https://transform.tools/json-to-scala-case-class ///
@@ -95,9 +95,9 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
                                          origin: String,
                                          balances: Seq[Balance]
                                        ) {
-    def asBasicEventModel: Seq[BasicEventModel] = {
+    def asZiqniEvent: Seq[ZiqniEvent] = {
       balances.map(balance =>
-        BasicEventModel(
+        ZiqniEvent(
           memberId = None, // CAN BE NONE - IF NONE THEN LOOKUP OR CREATE, IF NOT NONE THEN CONFIRM
           memberRefId = "user-balances-update-" + timestamp.getMillis.toString + "-" + user_id, // CANNOT BE NULL
           action = "user-balances-update",
@@ -140,7 +140,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
                               vendor_id: String,
                               vendor_name: Option[String]
                             ) {
-    def asBasicEventModel: BasicEventModel = BasicEventModel(
+    def asZiqniEvent: ZiqniEvent = ZiqniEvent(
       memberId = None,
       action = "payment",
       tags = Seq.empty,
@@ -188,7 +188,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
                                 origin: String,
                                 meta: Option[Map[String, String]]
                               ) {
-    def asBasicEventModel: BasicEventModel = BasicEventModel(
+    def asZiqniEvent: ZiqniEvent = ZiqniEvent(
       memberId = None,
       action = "game-round",
       tags = Seq.empty,
@@ -211,6 +211,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
         "user_currency" -> user_currency,
         "device_type" -> device_type,
         "origin" -> origin,
+        "win_multiplier" -> real_win_base.map(i => real_bet_base.map(ii => i*ii).getOrElse(0.0)),
       )
     )
   }
@@ -224,7 +225,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
                                    timestamp: DateTime,
                                    origin: String
                                  ) {
-    def asBasicEventModel(memberId: Option[String]): BasicEventModel = BasicEventModel(
+    def asZiqniEvent(memberId: Option[String]): ZiqniEvent = ZiqniEvent(
       memberId = memberId,
       action = "user-create",
       tags = Seq.empty,
@@ -252,7 +253,7 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
                               timestamp: DateTime,
                               origin: String
                             ) {
-    def asBasicEventModel: BasicEventModel = BasicEventModel(
+    def asZiqniEvent: ZiqniEvent = ZiqniEvent(
       memberId = None,
       action = "login",
       tags = Seq.empty,
