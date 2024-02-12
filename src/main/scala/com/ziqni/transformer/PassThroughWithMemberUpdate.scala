@@ -59,16 +59,17 @@ class PassThroughWithMemberUpdate extends ZiqniMqTransformer with LazyLogging wi
       member <- ziqniContext.ziqniApiAsync.getOrCreateMember(
         referenceId = memberRefId,
         createAs = () => {
-          val operator = event.customFields.get("operator").map(x=>Seq(s"operator[${x.value}")).getOrElse(Seq.empty)
+          val operator = event.customFields.get("operator").map(x=>Seq(s"${x.value}")).getOrElse(Seq.empty)
           CreateMemberRequest(memberRefId, memberRefId, operator, customFields = Map.empty, metadata = Map.empty)
         }
       )
       _ <- {
-        val operator = event.customFields.get("operator").map(x=>(s"operator[${x.value}"))
+        val operator = event.customFields.get("operator").map(x=>Seq(s"${x.value}")).getOrElse(Seq.empty)
 
-        if (operator.nonEmpty && !member.getTags.exists(_.contains(operator.get))) {
+        if (operator.nonEmpty && member.getTags.exists(x => x.contains(operator.head))) {
+          val tags = member.getTags.map(x => x ++ operator )
           val newCustomFields: Map[String, CustomFieldEntry[_]] = member.getCustomFields
-          val done = ziqniContext.ziqniApiAsync.updateMember(member.getMemberId, Option(memberRefId), member.getDisplayName, member.getTags.map(x=>x:+operator.get), customFields = Option(newCustomFields))
+          val done = ziqniContext.ziqniApiAsync.updateMember(member.getMemberId, Option(memberRefId), member.getDisplayName, tags, customFields = Option(newCustomFields))
           done.onComplete {
               case scala.util.Success(_) =>
               case scala.util.Failure(exception) => ziqniContext.ziqniSystemLogWriter("Failed to update member and push event", exception, LogLevel.ERROR)
