@@ -78,8 +78,8 @@ class FastTrackKafkaSample extends ZiqniMqTransformer with LazyLogging with Cust
 
   private def handleUserCreateV2(userCreateV2: UserCreateV2)(implicit ziqniContext: ZiqniContext, context: ExecutionContextExecutor): Unit = {
     for {
-      newMemberId <- ziqniContext.ziqniApiAsync.createMember(memberReferenceId = userCreateV2.user_id, displayName = userCreateV2.user_id, tags = Seq.empty, metaData = None)
-      eventResult <- ziqniContext.ziqniApiAsync.pushEvent(userCreateV2.asZiqniEvent(newMemberId))
+      newMemberId <- ziqniContext.ziqniApiAsync.createMember(new CreateMemberRequest(memberReferenceId = userCreateV2.user_id, displayName = userCreateV2.user_id, tags = Seq.empty))
+      eventResult <- ziqniContext.ziqniApiAsync.pushEvent(userCreateV2.asZiqniEvent(Option(newMemberId.getMemberId)))
     } yield eventResult
   }
 

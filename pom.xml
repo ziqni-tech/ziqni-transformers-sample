@@ -13,10 +13,10 @@
 
     <properties>
 
-        <ziqni.transformers.version>2.0.3</ziqni.transformers.version>
+        <ziqni.transformers.version>2.0.7</ziqni.transformers.version>
         <!--Test scope-->
-        <ziqni.transformers.test.version>0.0.3-alpha</ziqni.transformers.test.version>
-        <ziqni.admin.version>1.0.16</ziqni.admin.version>
+        <ziqni.transformers.test.version>0.0.4-alpha</ziqni.transformers.test.version>
+        <ziqni.admin.version>1.0.18</ziqni.admin.version>
 
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
